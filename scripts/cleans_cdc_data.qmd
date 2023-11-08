@@ -1,0 +1,202 @@
+---
+title: "Cleaning and Wrangling CDC Data"
+format: html
+---
+
+## About the Data
+CDC
+
+
+## Set up
+
+```{r setup}
+
+library(readr)
+library(sf)
+library(dplyr)
+library(tidycensus)
+library(ggplot2)
+library(mapview)
+library(tidyr)
+library(janitor)
+
+```
+
+
+## Read in data
+
+```{r}
+cdc_ca_2020 <- read_csv("raw_data/cdc_california_2020.csv") %>% 
+    clean_names()
+
+colnames(cdc_ca_2020)
+
+```
+
+## Varaibles of interest
+
+The responding variables (columns) relevant to our project are:
+
+- Socioeconomic Status – RPL_THEME1
+- Household Characteristics – RPL_THEME2
+- Racial & Ethnic Minority Status – RPL_THEME3
+- Housing Type & Transportation – RPL_THEME4
+- The overall summary ranking variable is RPL_THEMES
+
+Each of THEMES is one part of the overall index.
+
+<!--CREATE TEBLE WITH THE DEFINITION OF EACH SELECTED VARIABLE-->
+
+```{r}
+
+cdc_index_col <- cdc_ca_2020 %>% 
+    select(st, state, stcnty, county, location, area_sqmi, starts_with("rpl"))
+
+
+```
+
+
+
+## Getting Census tract level shapefiles
+
+```{r}
+# acs_vars <- load_variables(2021, "acs5")
+
+ca_tract_geo <- get_acs(
+    geography = "tract",
+    variables = c(total_population = "B01001A_001"),
+    state = "CA",
+    year = 2020,
+    geometry = TRUE) %>% 
+    clean_names()
+    
+class(ca_tract_geo)
+
+tract_geo_clean <- ca_tract_geo %>% 
+    select(location = name, total_pop = estimate, moe, geometry)
+
+colnames(tract_geo_clean)
+
+# separate("name", c("tract", "county", "state"), sep = ",", remove = FALSE) %>% 
+
+```
+
+
+Plotting tracts
+```{r}
+## only tract boundaries
+ggplot(tract_geo_clean)+
+    geom_sf(color = "black", 
+            fill = "gray")
+
+## Interactive map with total population
+mapview(tract_geo_clean, zcol = "total_pop")
+
+## static map with total population
+ggplot(tract_geo_clean,
+       aes(fill = total_pop))+
+    geom_sf()
+```
+
+
+
+## Merging polygons with data
+
+Note:CDC data has 9109 tract and `tidycensus` data has 9129
+Exploring what is the difference
+
+```{r}
+cdc_tract <- cdc_index_col %>% 
+    select(location) %>% 
+    mutate(source = "cdc")
+
+tc_tract <- tract_geo_clean %>% 
+    select(location)
+
+all_tract <- tc_tract %>% 
+    full_join(cdc_tract)
+
+no_cdc <- all_tract %>% 
+    filter(is.na(source))
+
+```
+
+The 20 observations in `no_cdc` have an "empty" polygon. It seems that there are not relevant rows.
+<!-- EXPLORE MORE ABOUT TIDY CENSYS AND THESE TRACTS-->
+
+As for now remove these rows and join both data set by `location`.
+
+
+### Joining CDC data with polygon data
+Note: to keep the class sf on a left join, the sf object needs to be the left data frame
+
+```{r}
+
+colnames(tract_geo_clean)
+
+cdc_geom <- tract_geo_clean %>% 
+    left_join(cdc_index_col, by = "location") %>% 
+    filter(!is.na(stcnty))
+    
+class(cdc_geom)
+colnames(cdc_geom)
+
+```
+
+
+Plot Index
+```{r}
+mapview(cdc_geom, zcol = "rpl_themes")
+
+```
+
+Loos like there is some wide ranfe of values
+
+```{r}
+range(cdc_geom$rpl_themes, na.rm = T)
+```
+
+Data has -999 values. Are these NAs? How many?
+
+```{r}
+no_values <- cdc_geom %>% 
+    filter(rpl_themes == -999)
+```
+ 
+ 65 tract with -999 values in `rpl_themes` column.
+ <!-- CHECK and document why -->
+
+ 
+We will treat them as NAs for now.
+
+## Clanining missing values
+ 
+```{r}
+cdc_geom_clean <- cdc_geom %>% 
+    mutate(rpl_themes = if_else(rpl_themes == -999, NA, rpl_themes))
+
+check_na <- cdc_geom_clean %>% 
+    filter(is.na(rpl_themes))
+
+```
+ 
+ plot to check
+```{r}
+mapview(cdc_geom_clean, zcol = "rpl_themes")
+```
+ 
+ 
+
+
+
+-------------------------------------------
+Transforming CDC data into long format
+
+```{r}
+# cdc_long <- cdc_index_col %>% 
+#     pivot_longer(cols = starts_with("rpl"),
+#                  names_to = "index_type",
+#                  values_to = "index_value")
+```
+
+
