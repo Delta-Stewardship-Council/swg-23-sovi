@@ -4,7 +4,13 @@ format: html
 ---
 
 ## About the Data
-CDC
+
+-   Name: CDC/ATSDR SVI
+-   Source: https://www.atsdr.cdc.gov/placeandhealth/svi/data_documentation_download.html
+-   Download Data: November 8, 2023.
+-   Format: CSV File
+-   Years: All available at time of download (2000, 2010, 2014, 2016, 2018, and 2020)
+-   Geography: California at a Census tract level.
 
 
 ## Set up
@@ -26,6 +32,32 @@ library(janitor)
 ## Read in data
 
 ```{r}
+cdc_ca_2000 <- read_csv("raw_data/cdc_california_2000.csv") %>% 
+    clean_names()
+
+colnames(cdc_ca_2000)
+
+cdc_ca_2010 <- read_csv("raw_data/cdc_california_2010.csv") %>% 
+    clean_names()
+
+colnames(cdc_ca_2010)
+
+cdc_ca_2014 <- read_csv("raw_data/cdc_california_2014.csv") %>% 
+    clean_names()
+
+colnames(cdc_ca_2014)
+
+cdc_ca_2016 <- read_csv("raw_data/cdc_california_2016.csv") %>% 
+    clean_names()
+
+colnames(cdc_ca_2016)
+
+
+cdc_ca_2018 <- read_csv("raw_data/cdc_california_2018.csv") %>% 
+    clean_names()
+
+colnames(cdc_ca_2018)
+
 cdc_ca_2020 <- read_csv("raw_data/cdc_california_2020.csv") %>% 
     clean_names()
 
@@ -49,7 +81,7 @@ Each of THEMES is one part of the overall index.
 
 ```{r}
 
-cdc_index_col <- cdc_ca_2020 %>% 
+cdc_index_col <- cdc_ca_2020   %>% 
     select(st, state, stcnty, county, location, area_sqmi, starts_with("rpl"))
 
 
