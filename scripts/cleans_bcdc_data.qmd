@@ -1,0 +1,46 @@
+---
+title: "Cleaning and Wrangling BCDC Data"
+format: html
+---
+
+## About the Data
+
+-   Name: Adapting to Rising Tides Community Vulnerability for Current and Future Flood Risk
+-   Source: <https://github.com/BCDC-GIS/community-vulnerability>
+-   Download Data: November 21, 2023
+-   Format: CSV File from GitHub
+-   Years: 
+-   Geography: Data at a block level
+
+
+## Set up
+
+```{r setup}
+
+library(readr)
+library(sf)
+library(dplyr)
+library(tidycensus)
+library(ggplot2)
+library(mapview)
+library(tidyr)
+library(janitor)
+
+```
+
+
+## Read data
+```{r}
+bcdc_gh_url <- "https://raw.githubusercontent.com/BCDC-GIS/community-vulnerability/main/Outputs/CommunityVulnerability_ACS_2012_2016_22_07_2020_LONG.csv"
+
+bcdc_raw <- read_csv(bcdc_gh_url)
+
+```
+
+- Exploring data
+```{r}
+colnames(bcdc_raw)
+```
+
+
+

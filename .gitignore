@@ -51,4 +51,6 @@ rsconnect/
 ## Raw data folder
 /raw_data
 
+## DS Store
+.DS_Store
 
